@@ -1,4 +1,4 @@
-import { Body, Controller, HttpException, Post } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import { AuthPayloadDto } from './dot/auth-payload.dto';
 import { AuthService } from './auth.service';
 
@@ -6,11 +6,13 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @Post('signup')
+  signup(@Body() authPayload: AuthPayloadDto) {
+    return this.authService.signUp(authPayload);
+  }
+
   @Post('login')
   login(@Body() authPayload: AuthPayloadDto) {
-    const user = this.authService.validateUser(authPayload);
-    if (!user) throw new HttpException('User not found', 401);
-
-    return this.authService.validateUser(authPayload);
+    return this.authService.signIn(authPayload);
   }
 }

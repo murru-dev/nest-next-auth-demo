@@ -1,23 +1,27 @@
-import { forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { AuthPayloadDto } from './dot/auth-payload.dto';
-import { PrismaClient } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private prisma: PrismaClient,
-    @Inject(forwardRef(() => JwtService))
-    private jwtService: JwtService,
+    private readonly prismaService: PrismaService,
+    private readonly jwtService: JwtService,
   ) {}
 
-  async validateUser({ email, hash }: AuthPayloadDto) {
-    const foundUser = await this.prisma.user.findUnique({ where: { email } });
-    if (!foundUser) return null;
-    if (hash === foundUser.hash) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      //const { hash, ...user } = foundUser;
-      return this.jwtService.sign(foundUser);
-    }
+  async signUp(data: AuthPayloadDto) {
+    const createdUser = await this.prismaService.user.create({
+      data: data,
+    });
+
+    return createdUser;
+  }
+  async signIn({ email }: AuthPayloadDto) {
+    const foundUser = await this.prismaService.user.findUnique({
+      where: { email },
+    });
+    if (!foundUser) throw new ForbiddenException('Usuario incorrecto');
+    return this.jwtService.sign(foundUser);
   }
 }
